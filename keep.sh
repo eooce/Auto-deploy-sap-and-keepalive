@@ -205,7 +205,15 @@ add_cron_job() {
             apk add --no-cache cronie bash >/dev/null 2>&1 &
             rc-update add crond && rc-service crond start >/dev/null 2>&1
         fi
+    elif command -v apt >/dev/null 2>&1; then
+        if ! command -v cron >/dev/null 2>&1; then
+            DEBIAN_FRONTEND=noninteractive apt-get update -y >/dev/null 2>&1
+            DEBIAN_FRONTEND=noninteractive apt-get install -y cron >/dev/null 2>&1
+        fi
+    else
+        red "不支持的操作系统" && exit 1
     fi
+    
     # 检查定时任务是否已经存在
     if ! crontab -l 2>/dev/null | grep -q "$SCRIPT_PATH"; then
         (crontab -l 2>/dev/null; echo "*/2 8-9 * * * /bin/bash $SCRIPT_PATH >> /root/keep-sap.log 2>&1") | crontab -
