@@ -39,21 +39,36 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y cf8-cli
 
-    - name: 设置区域相关变量
+    - name: Set environment variables
       run: |
+
         if [ "${{ github.event.inputs.region }}" = "SG" ]; then
           echo "CF_API=https://api.cf.ap21.hana.ondemand.com" >> $GITHUB_ENV
-          echo "CF_ORG=${{ secrets.SG_ORG }}" >> $GITHUB_ENV
-          echo "使用新加坡(SG)区域"
-        else
+        elif [ "${{ github.event.inputs.region }}" = "US" ]; then
           echo "CF_API=https://api.cf.us10-001.hana.ondemand.com" >> $GITHUB_ENV
-          echo "CF_ORG=${{ secrets.US_ORG }}" >> $GITHUB_ENV
-          echo "使用美国(US)区域"
         fi
 
     - name: Login to Cloud Foundry
       run: |
-        cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}" -o "${{ env.CF_ORG }}" -s "${{ secrets.SPACE }}"
+        # 先登录以获取组织列表（需要用户名密码）
+        if [ "${{ github.event.inputs.region }}" = "SG" ]; then
+          cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}"
+        elif [ "${{ github.event.inputs.region }}" = "US" ]; then
+          cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}"
+        fi
+
+        # 获取组织列表
+        ORG=$(cf orgs | sed -n '4p')
+        echo "Selected org: $ORG"
+        echo "ORG=$ORG" >> $GITHUB_ENV
+
+        # 获取空间列表
+        SPACE=$(cf spaces | sed -n '4p')
+        echo "Selected space: $SPACE"
+        echo "SPACE=$SPACE" >> $GITHUB_ENV
+
+        # 使用获取的组织和空间重新登录
+        cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}" -o "$ORG" -s "$SPACE"
 
     - name: 获取所有应用
       id: get-apps

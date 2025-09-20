@@ -25,11 +25,11 @@ on:
         default: ''
 
 env:
-  DOCKER_IMAGE: ghcr.io/eooce/nodejs:main
+  DOCKER_IMAGE: ${{ secrets.DOCKER_IMAGE || 'ghcr.io/eooce/nodejs:main' }}
   MEMORY: 512M
 
 jobs:
-  deploy:
+  deploy-app:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment }}
 
@@ -69,11 +69,21 @@ jobs:
 
     - name: Login to Cloud Foundry
       run: |
-        if [ "${{ github.event.inputs.region }}" = "SG" ]; then
-          cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}" -o "${{ secrets.SG_ORG }}" -s "${{ secrets.SPACE }}"
-        elif [ "${{ github.event.inputs.region }}" = "US" ]; then
-          cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}" -o "${{ secrets.US_ORG }}" -s "${{ secrets.SPACE }}"
-        fi
+
+        cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}"
+
+        # 获取组织列表
+        ORG=$(cf orgs | sed -n '4p')
+        echo "Selected org: $ORG"
+        echo "ORG=$ORG" >> $GITHUB_ENV
+
+        # 获取空间列表
+        SPACE=$(cf spaces | sed -n '4p')
+        echo "Selected space: $SPACE"
+        echo "SPACE=$SPACE" >> $GITHUB_ENV
+
+        # 使用获取的组织和空间重新登录
+        cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}" -o "$ORG" -s "$SPACE"
 
     - name: Deploy application
       run: |
@@ -90,11 +100,11 @@ jobs:
         cf set-env ${{ env.APP_NAME }} ARGO_DOMAIN "${{ secrets.ARGO_DOMAIN }}"
         cf set-env ${{ env.APP_NAME }} ARGO_AUTH "${{ secrets.ARGO_AUTH }}"
         cf set-env ${{ env.APP_NAME }} SUB_PATH "${{ secrets.SUB_PATH }}"
-        cf set-env ${{ env.APP_NAME }} CFIP "${{ secrets.CFIP }}"
+        cf set-env ${{ env.APP_NAME }} CFIP "${{ secrets.CFIP || 'cf.877774.xyz' }}"
         cf set-env ${{ env.APP_NAME }} CFPORT "${{ secrets.CFPORT }}"
         cf set-env ${{ env.APP_NAME }} CHAT_ID "${{ secrets.CHAT_ID }}"
         cf set-env ${{ env.APP_NAME }} BOT_TOKEN "${{ secrets.BOT_TOKEN }}"
-        
+
         # 可选：从文件读取环境变量(如果存在)
         if [ -f .env ]; then
           while IFS= read -r line; do
@@ -105,6 +115,18 @@ jobs:
           done < .env
         fi
 
+        # 如果 DOCKER_IMAGE 是否包含 xhttp、goxhttp、ws 等关键词说明为直连镜像
+        if [[ "${{ secrets.DOCKER_IMAGE }}" =~ (xhttp|goxhttp|ws) ]]; then
+          # 获取应用路由
+          ROUTE=$(cf app ${{ env.APP_NAME }} | grep "routes:" | awk '{print $2}')
+          if [ -n "$ROUTE" ]; then
+            echo "设置 DOMAIN 环境变量为: $ROUTE"
+            cf set-env ${{ env.APP_NAME }} DOMAIN "$ROUTE"
+          else
+            echo "⚠️ 未找到应用路由，无法设置 DOMAIN,请手动将节点里的address、host和sni改为应用域名"
+          fi
+        fi
+        
     - name: Restage application
       run: |
         cf restage ${{ env.APP_NAME }}
@@ -113,3 +135,19 @@ jobs:
       run: |
         cf app ${{ env.APP_NAME }}
         echo "Deployment completed successfully!"
+
+    - name: 详细部署信息
+      run: |
+        echo "🚀 部署完成！详细信息如下："
+        echo "区域(Region): ${{ github.event.inputs.region }}"
+        echo "组织(ORG): ${{ env.ORG }}"
+        echo "空间(SPACE): ${{ env.SPACE }}"
+        echo "应用名称(App Name): ${{ env.APP_NAME }}"
+
+        # 获取应用路由
+        ROUTE=$(cf app ${{ env.APP_NAME }} | grep "routes:" | awk '{print $2}')
+        if [ -n "$ROUTE" ]; then
+          echo "应用 URL (APP_URL): https://$ROUTE"
+        else
+          echo "⚠️ 未找到应用路由，请检查部署状态。"
+        fi
