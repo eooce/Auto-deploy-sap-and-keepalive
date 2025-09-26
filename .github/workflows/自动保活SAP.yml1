@@ -2,7 +2,7 @@ name: 自动保活 SAP
 
 on:
   schedule:
-    - cron: '58 23 * * *'     # actions时间不准，不准确再酌情调整
+    - cron: '57 23 * * *'     # actions时间不准，不准确再酌情调整
   workflow_dispatch:  # 允许手动触发
 
 jobs:
