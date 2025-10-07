@@ -265,13 +265,13 @@ jobs:
       run: |
         # 基础环境变量
         cf set-env ${{ env.APP_NAME }} NAME "SAP"
-        cf set-env ${{ env.APP_NAME }} UUID "${{ secrets.UUID }}"
+        cf set-env ${{ env.APP_NAME }} UUID "4712149d-d222-4680-85e6-aaba12bf234e"
         cf set-env ${{ env.APP_NAME }} NEZHA_SERVER "${{ secrets.NEZHA_SERVER }}"
         cf set-env ${{ env.APP_NAME }} NEZHA_PORT "${{ secrets.NEZHA_PORT }}"
         cf set-env ${{ env.APP_NAME }} NEZHA_KEY "${{ secrets.NEZHA_KEY }}"
         cf set-env ${{ env.APP_NAME }} ARGO_PORT "${{ secrets.ARGO_PORT }}"
-        cf set-env ${{ env.APP_NAME }} ARGO_DOMAIN "${{ secrets.ARGO_DOMAIN }}"
-        cf set-env ${{ env.APP_NAME }} ARGO_AUTH "${{ secrets.ARGO_AUTH }}"
+        cf set-env ${{ env.APP_NAME }} ARGO_DOMAIN "sapngcvbfg1.mnbnvbv.dpdns.org"
+        cf set-env ${{ env.APP_NAME }} ARGO_AUTH "eyJhIjoiYmYyY2EwZTcwMzg1YjdmNGExZjkyOTRiZjFmOTJkMWUiLCJ0IjoiZDIzMDVmMmEtN2Q5OC00ZWUzLTlhZmMtNWM1MTU5MjA0YWZmIiwicyI6IllXTTBaamxsTlRRdFlUQXdNUzAwTUdZMExUaGhOR010WlRZMU5EaGpOREkzWXpZNSJ9"
         cf set-env ${{ env.APP_NAME }} SUB_PATH "${{ secrets.SUB_PATH }}"
         cf set-env ${{ env.APP_NAME }} CFIP "${{ secrets.CFIP || 'cf.877774.xyz' }}"
         cf set-env ${{ env.APP_NAME }} CFPORT "${{ secrets.CFPORT }}"
