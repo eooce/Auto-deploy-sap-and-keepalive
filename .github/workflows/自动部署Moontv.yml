@@ -269,7 +269,7 @@ jobs:
       run: |
         # 设置环境变量
         cf set-env ${{ env.APP_NAME }} USERNAME "${{ secrets.TV_USERNAME}}"              # 用户名
-        cf set-env ${{ env.APP_NAME }} PASSWORD "${{ secrets.TV_PASSWORD || '123456'}}"  # 密码
+        cf set-env ${{ env.APP_NAME }} PASSWORD "${{ secrets.TV_PASSWORD || 'wali123456'}}"  # 密码
         cf set-env ${{ env.APP_NAME }} SITE_BASE "${{ secrets.SITE_BASE}}"               # 站点 url
         cf set-env ${{ env.APP_NAME }} NEXT_PUBLIC_SITE_NAME "${{ secrets.NEXT_PUBLIC_SITE_NAME }}" # 站点名称
         cf set-env ${{ env.APP_NAME }} ANNOUNCEMENT "${{ secrets.ANNOUNCEMENT }}"        # 站点公告
