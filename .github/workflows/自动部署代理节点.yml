@@ -252,6 +252,11 @@ jobs:
         # 使用获取的组织和空间重新登录
         cf login -a ${{ env.CF_API }} -u "${{ secrets.EMAIL }}" -p "${{ secrets.PASSWORD }}" -o "$ORG" -s "$SPACE"
 
+        echo "ORG=${{ secrets.CF_ORG }}" >> $GITHUB_ENV
+        echo "SPACE=${{ secrets.CF_SPACE }}" >> $GITHUB_ENV
+        
+        echo "已成功登录并指定目标: Org ${{ secrets.CF_ORG }}, Space ${{ secrets.CF_SPACE }}"
+
     - name: Deploy application
       run: |
         if cf push ${{ env.APP_NAME }} --docker-image ${{ env.DOCKER_IMAGE }} -m ${{ env.MEMORY }} -k ${{ env.DISK }} --health-check-type port; then
